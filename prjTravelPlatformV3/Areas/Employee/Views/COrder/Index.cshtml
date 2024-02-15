@@ -1,0 +1,135 @@
+﻿@model IEnumerable<prjTravelPlatformV3.Models.RCarRentOrderInfoView>
+@{
+    ViewData["Title"] = "訂單管理";
+}
+
+@section Styles {
+    <link href="~/lib/datatables/css/jquery.datatables.css" rel="stylesheet" />
+    <style>
+        thead {
+            background-color: lightslategrey;
+            color: black;
+        }
+    </style>
+}
+<h4>訂單管理</h4>
+<table class="table" id="tbCarRentOrderInfo">
+    <thead>
+        <tr>
+            <th>訂單編號</th>
+            <th>會員編號</th>
+            <th>會員姓名</th>
+            <th>優惠券名稱</th>
+            <th>付款方式</th>
+            <th>付款狀態</th>
+            <th>訂單狀態</th>
+            <th>訂單成立日期</th>
+            <th>訂單總金額</th>
+@*             <th style="width:50px">功能</th> *@
+        </tr>
+    </thead>
+</table>
+<h4>訂單明細管理</h4>
+<table class="table" id="tbCarRentOrderDetailInfo">
+    <thead>
+        <tr>
+            <th style="display: none">訂單明細編號</th>
+            <th>訂單編號</th>
+            <th>車牌號碼</th>
+            <th>車輛型號</th>
+            <th>駕駛姓名</th>
+            <th>駕駛身分證</th>
+            <th>取車時間</th>
+            <th>取車據點</th>
+            <th>還車時間</th>
+            <th>還車據點</th>
+            <th>租車費用</th>
+@*             <th style="width:50px">功能</th> *@
+        </tr>
+    </thead>
+</table>
+@section Scripts
+{
+    <script src="~/lib/datatables/js/jquery.datatables.min.js"></script>
+    <script src="//cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#tbCarRentOrderInfo').dataTable({
+                autoWidth: false,
+                ajax: {
+                    type: 'GET',
+                    url: "/api/CarRent/Orders",
+                    dataSrc: function (json) { return json; }
+                },
+                columns: [
+                    {
+                        "data": "fOrderId",
+                        "render": function (data, type, row) {
+                            return data + `<br><a href="#" class="order-detail-link" data-orderid="${row.fOrderId}">訂單明細</a>`
+                        }
+                    },
+                    { "data": "fMemberId" },
+                    { "data": "fName" },
+                    { "data": "fCoupon_name" },
+                    { "data": "fPayment" },
+                    { "data": "fPaymentStatus" },
+                    { "data": "fOrderStatus" },
+                    { "data": "fOrderDate" },
+                    { "data": "fTotalPrice" },
+                ],
+                fixedHeader: { header: true },
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/zh-HANT.json'
+                },
+            });
+
+            $('#tbCarRentOrderDetailInfo').dataTable({
+                autoWidth: false,
+                ajax: {
+                    type: 'GET',
+                    url: "/api/CarRent/OrderDetails",
+                    dataSrc: function (json) { return json; }
+                },
+                columns: [
+                    { "data": "fOrderDetailId", "visible": false },
+                    { "data": "fOrderId" },
+                    { "data": "fLicensePlateNum" },
+                    { "data": "fModelName" },
+                    { "data": "fName" },
+                    { "data": "fId" },
+                    { "data": "fFromDateTime" },
+                    { "data": "fServicePoint" },
+                    { "data": "fRentDateTime" },
+                    { "data": "fRentServicePoint" },
+                    { "data": "fPrice" },
+                ],
+                fixedHeader: { header: true },
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/zh-HANT.json'
+                },
+            });
+        });
+        $(document).ready(function () {
+            $('#tbCarRentOrderInfo tbody').on('click', 'a.order-detail-link', function () {
+                var orderId = $(this).data('orderid');
+                console.log(orderId);
+                $.ajax({
+                    type: 'GET',
+                    url: '/api/CarRent/OrderDetailsByOrderId?orderId=' + orderId,
+                    success: function (orderDetails) {
+                        console.log("Received order details:", orderDetails);
+                        // 清空表格
+                        var table = $('#tbCarRentOrderDetailInfo').DataTable();
+                        table.clear().draw();
+                        // 添加新的訂單明細
+                        table.rows.add(orderDetails).draw();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+        });
+
+    </script>
+}
